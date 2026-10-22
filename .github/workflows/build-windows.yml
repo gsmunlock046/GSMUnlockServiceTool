@@ -36,6 +36,38 @@ jobs:
           if (-not (Test-Path (Join-Path $dest "idevice_id.exe"))) {
             throw "idevice_id.exe was not found in the downloaded Windows tool package."
           }
+      - name: Download Android platform-tools
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $url = "https://dl.google.com/android/repository/platform-tools-latest-windows.zip"
+          $zip = Join-Path $env:RUNNER_TEMP "platform-tools.zip"
+          $extract = Join-Path $env:RUNNER_TEMP "platform-tools"
+          Invoke-WebRequest -Uri $url -OutFile $zip
+          Expand-Archive -Path $zip -DestinationPath $extract -Force
+          $dest = Join-Path $PWD "artifacts/app/platform-tools"
+          New-Item -ItemType Directory -Force -Path $dest | Out-Null
+          Copy-Item (Join-Path $extract "platform-tools/adb.exe") $dest
+          Copy-Item (Join-Path $extract "platform-tools/fastboot.exe") $dest
+          Copy-Item (Join-Path $extract "platform-tools/AdbWinApi.dll") $dest
+          Copy-Item (Join-Path $extract "platform-tools/AdbWinUsbApi.dll") $dest
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --yes --no-progress
+      - name: Build Windows installer
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          New-Item -ItemType Directory -Force -Path artifacts/installer | Out-Null
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup compilation failed." }
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: GSM-Cleaner-Remover-Installer-x64
+          path: artifacts/installer/GSM-Cleaner-Remover-Setup-x64.exe
+          if-no-files-found: error
+          retention-days: 14
       - name: Upload Windows package
         uses: actions/upload-artifact@v4
         with:
