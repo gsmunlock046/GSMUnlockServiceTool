@@ -15,6 +15,10 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
+      - name: Restore
+        run: dotnet restore GSMUnlockServiceTool.csproj
+      - name: Publish self-contained Windows x64 EXE
+        run: dotnet publish GSMUnlockServiceTool.csproj -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -o artifacts/app
       - name: Download Windows libimobiledevice tools
         shell: pwsh
         run: |
@@ -32,10 +36,6 @@ jobs:
           if (-not (Test-Path (Join-Path $dest "idevice_id.exe"))) {
             throw "idevice_id.exe was not found in the downloaded Windows tool package."
           }
-      - name: Restore
-        run: dotnet restore GSMUnlockServiceTool.csproj
-      - name: Publish self-contained Windows x64 EXE
-        run: dotnet publish GSMUnlockServiceTool.csproj -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -o artifacts/app
       - name: Upload Windows package
         uses: actions/upload-artifact@v4
         with:
