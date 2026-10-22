@@ -15,11 +15,28 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
+      - name: Download Windows libimobiledevice tools
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $url = "https://github.com/jrjr/libimobiledevice-windows/releases/latest/download/libimobile-suite-latest_w64.zip"
+          $zip = Join-Path $env:RUNNER_TEMP "libimobile-suite.zip"
+          $extract = Join-Path $env:RUNNER_TEMP "libimobile-suite"
+          Invoke-WebRequest -Uri $url -OutFile $zip
+          Expand-Archive -Path $zip -DestinationPath $extract -Force
+          $dest = Join-Path $PWD "artifacts/app/tools/libimobiledevice"
+          New-Item -ItemType Directory -Force -Path $dest | Out-Null
+          Get-ChildItem -Path $extract -Recurse -File | ForEach-Object {
+            Copy-Item $_.FullName -Destination $dest -Force
+          }
+          if (-not (Test-Path (Join-Path $dest "idevice_id.exe"))) {
+            throw "idevice_id.exe was not found in the downloaded Windows tool package."
+          }
       - name: Restore
         run: dotnet restore GSMUnlockServiceTool.csproj
       - name: Publish self-contained Windows x64 EXE
         run: dotnet publish GSMUnlockServiceTool.csproj -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -o artifacts/app
-      - name: Upload EXE artifact
+      - name: Upload Windows package
         uses: actions/upload-artifact@v4
         with:
           name: GSMUnlockServiceTool-Windows-x64
