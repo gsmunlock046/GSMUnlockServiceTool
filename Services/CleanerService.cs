@@ -6,7 +6,7 @@ public sealed record CleanerPackage(string PackageId, string Source);
 
 public static class CleanerService
 {
-    private static readonly Regex PackagePattern = new(@"^[A-Za-z0-9_]+(?:\\.[A-Za-z0-9_]+)+$", RegexOptions.Compiled);
+    private static readonly Regex PackagePattern = new(@"^[A-Za-z0-9_]+(?:[.][A-Za-z0-9_]+)+$", RegexOptions.Compiled);
 
     public static async Task<List<CleanerPackage>> FindCleanerPackagesAsync(string serial)
     {
